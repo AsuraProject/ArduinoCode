@@ -1,21 +1,17 @@
 #include <Asura.h>
-#include "U8glib.h"
 
 /* Principal */
 Asura asuraMain;
 
-bool started = false;
-int layout = 0;
-
-/* Gyro Millis */
-long previousGyroMillis;
-long previousGyroStartMillis;
-long previousGyroRightMillis;
-long previousGyroLeftMillis;
-long previousGyroUpMillis;
+/* Accelerometer Millis */
+long previousAccelMillis;
+long previousAccelStartMillis;
+long previousAccelRightMillis;
+long previousAccelLeftMillis;
+long previousAccelUpMillis;
 
 /* Screen */
-U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NO_ACK);
+U8G2_SSD1306_128X64_NONAME_1_HW_I2C screenController(U8G2_R0, 8, 13, 11);
 
 char *arraySerial = (char*) calloc(0, sizeof(char));
 int *x = (int*) calloc(0, sizeof(int));
@@ -71,19 +67,19 @@ void getBluetoothResults(char *arraySerial, int *pixelPositionsSize, int *xStrin
 /* Screen Functions */
 
 void draw(int *x, int *y, int *pixelPositionsSize, int *xString, int *yString, char **stringSerial, int stringPositionsSizeBack) {
-  u8g.setFont(u8g_font_04b_03);
+  screenController.setFont(u8g2_font_u8glib_4_tf);
   
   int counter = 0;
   String drawString;
   
   while (counter != *pixelPositionsSize) {
-    u8g.drawPixel(x[counter], y[counter]);
+    screenController.drawPixel(32 + x[counter], 32 + y[counter]);
     counter++;
   }
 
   counter = 0;
   while(counter != stringPositionsSizeBack){   
-    u8g.drawStr(xString[counter], yString[counter], stringSerial[counter]);
+    screenController.drawStr(32 + xString[counter], 32 + yString[counter], stringSerial[counter]);
     counter++;
   }
 }
@@ -123,7 +119,11 @@ void getStringPositions(char **stringSerial, int *xString, int *yString, int str
 void setup(){
   Serial.begin(57600);
   Serial1.begin(57600);
-  asuraMain.gyroStart();
+  
+  asuraMain.begin();
+  
+  screenController.begin();
+  screenController.clear();
 
   free(x);
   free(y);
@@ -180,10 +180,10 @@ void loop(){
       xString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
       yString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
       getStringPositions(stringSerial, xString, yString, stringPositionsSizeBack);
-      u8g.firstPage();
+      screenController.firstPage();
       do {
         draw(x, y, pixelPositionsSize, xString, yString, stringSerial, stringPositionsSizeBack);
-      } while (u8g.nextPage());
+      } while (screenController.nextPage());
 
       free(x);
       free(y);
@@ -207,69 +207,69 @@ void loop(){
   /* Accelerometer */
   
   unsigned long currentMillis = millis();
-  if (currentMillis - previousGyroMillis > 100){
-    previousGyroMillis = currentMillis;
-    if(asuraMain.gyro('z') <= 145){
-      previousGyroStartMillis = previousGyroStartMillis + (millis() - currentMillis);
+  if (currentMillis - previousAccelMillis > 100){
+    previousAccelMillis = currentMillis;
+    if(asuraMain.accel('z') <= 145){
+      previousAccelStartMillis = previousAccelStartMillis + (millis() - currentMillis);
     }
   }
 
-  if(previousGyroStartMillis < 18 && previousGyroStartMillis != 0){
-    if(asuraMain.gyro('z') == 180){
-      asuraMain.bluetoothSend('0'); // Up
-      previousGyroStartMillis = 0;
+  if(previousAccelStartMillis < 18 && previousAccelStartMillis != 0){
+    if(asuraMain.accel('z') == 180){
+      Serial1.println(0); // Up
+      previousAccelStartMillis = 0;
      }
   }else{
-    if(asuraMain.gyro('z') == 180){
-      previousGyroStartMillis = 0;
+    if(asuraMain.accel('z') == 180){
+      previousAccelStartMillis = 0;
     }
   }
 
   currentMillis = millis();
-  if(asuraMain.gyro('y') >= 317){
-    previousGyroRightMillis = previousGyroRightMillis + (millis() - currentMillis);      
+  if(asuraMain.accel('y') >= 317){
+    previousAccelRightMillis = previousAccelRightMillis + (millis() - currentMillis);      
   }
 
   currentMillis = millis();
-  int gyroY = asuraMain.gyro('y');
-  if(gyroY >= 216 && gyroY <= 219){
-    previousGyroLeftMillis = previousGyroLeftMillis + (millis() - currentMillis);  
+  int accelY = asuraMain.accel('y');
+  if(accelY >= 216 && accelY <= 219){
+    previousAccelLeftMillis = previousAccelLeftMillis + (millis() - currentMillis);  
   }
 
   currentMillis = millis();
-  if(asuraMain.gyro('z') <= 200 && asuraMain.gyro('z') >= 195){
-    previousGyroUpMillis = previousGyroUpMillis + (millis() - currentMillis);  
+  if(asuraMain.accel('z') <= 200 && asuraMain.accel('z') >= 195){
+    previousAccelUpMillis = previousAccelUpMillis + (millis() - currentMillis);  
   }
         
-  if(previousGyroRightMillis < 200 && previousGyroRightMillis != 0 ){ 
-    if(asuraMain.gyro('y') <= 271){
-      asuraMain.bluetoothSend('2'); // Left
-      previousGyroRightMillis = 0;
+  if(previousAccelRightMillis < 200 && previousAccelRightMillis != 0 ){ 
+    if(asuraMain.accel('y') <= 271){
+      Serial1.println(2); // Left
+      previousAccelRightMillis = 0;
     }
   }else{
-    if(asuraMain.gyro('y') <= 271){
-      previousGyroRightMillis = 0;
+    if(asuraMain.accel('y') <= 271){
+      previousAccelRightMillis = 0;
     }
   }
 
-  if(previousGyroLeftMillis < 200 && previousGyroLeftMillis != 0 ){ 
-    if(asuraMain.gyro('y') >= 271){
-      asuraMain.bluetoothSend('3'); // Right
-      previousGyroLeftMillis = 0;
+  if(previousAccelLeftMillis < 200 && previousAccelLeftMillis != 0 ){ 
+    if(asuraMain.accel('y') >= 271){
+      Serial1.println(3); // Right
+      previousAccelLeftMillis = 0;
     }else{
-      if(asuraMain.gyro('y') >= 271){
-        previousGyroLeftMillis = 0;
+      if(asuraMain.accel('y') >= 271){
+        previousAccelLeftMillis = 0;
       }
     }
   }
     
-  if(previousGyroUpMillis < 200 && previousGyroUpMillis != 0 ){ 
-    if(asuraMain.gyro('z') == 180){
-      asuraMain.bluetoothSend('1'); // Down
-      previousGyroUpMillis = 0;
+  if(previousAccelUpMillis < 200 && previousAccelUpMillis != 0 ){ 
+    if(asuraMain.accel('z') == 180){
+      Serial1.println(1); // Down
+      previousAccelUpMillis = 0;
     }else{
-      if(asuraMain.gyro('z') == 180){
-        previousGyroUpMillis = 0;
+      if(asuraMain.accel('z') == 180){
+        previousAccelUpMillis = 0;
       }  
     }
   }      
