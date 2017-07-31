@@ -13,10 +13,10 @@ long previousAccelUpMillis;
 /* Screen */
 U8G2_SSD1306_128X64_NONAME_1_HW_I2C screenController(U8G2_R0, 8, 13, 11);
 
-char *arraySerial = (char*) calloc(0, sizeof(char));
-int *x = (int*) calloc(0, sizeof(int));
-int *y = (int*) calloc(0, sizeof(int));
+char **pixelSerial = (char**) calloc(0, sizeof(char));
 int *pixelPositionsSize = (int*) calloc(0, sizeof(int));
+int *x = NULL;
+int *y = NULL;
 
 char **stringSerial = (char**) calloc(0, sizeof(char));
 int *stringPositionsSize = (int*) calloc(0, sizeof(int));
@@ -24,20 +24,21 @@ int *xString = NULL;
 int *yString = NULL;
 
 String stringBase = "";
-bool bluetoothStart = false;  
+bool bluetoothStart = false;
 
 /* Bluetooth Functions */
 
-void getBluetoothResults(char *arraySerial, int *pixelPositionsSize, int *xString, int *yString, int *stringPositionsSize, int stringPositionsSizeBack, char **stringSerial, String stringBase) {
+void getBluetoothResults(char **pixelSerial, int *pixelPositionsSize, int pixelPositionsSizeBack, int *xString, int *yString, int *stringPositionsSize, int stringPositionsSizeBack, char **stringSerial, String stringBase) {
   char caractereSerial;
   bool stringLevel = false;
   int pixelsSize;
   int counter = 0;  
   int temp = *stringPositionsSize;
+  int temp2 = *pixelPositionsSize;
   String stringSerialBase = "";
   String pixelSerialBase = "";
 
-  while(stringBase[counter] != '`'){
+  while(stringBase[counter] != '\n'){
     caractereSerial = stringBase[counter];
     if (stringLevel == true) {
         stringSerialBase.concat(caractereSerial);         
@@ -54,13 +55,23 @@ void getBluetoothResults(char *arraySerial, int *pixelPositionsSize, int *xStrin
   if(stringSerialBase != ""){
     temp++;
     stringSerial[stringPositionsSizeBack] = (char*) calloc(stringSerialBase.length(), sizeof(char));
+    if(stringSerial == NULL){
+        freeAll();
+        Serial1.println("9");
+      }
     stringSerialBase.toCharArray(stringSerial[stringPositionsSizeBack], stringSerialBase.length() + 1);
     *stringPositionsSize = temp;
   }
 
   if(pixelSerialBase != ""){
-    pixelSerialBase.toCharArray(arraySerial, pixelSerialBase.length() + 1);
-    (*pixelPositionsSize)++;
+    temp2++;
+    pixelSerial[pixelPositionsSizeBack] = (char*) calloc(pixelSerialBase.length(), sizeof(char));
+    if(pixelSerial == NULL){
+        freeAll();
+        Serial1.println("9");
+      }
+    pixelSerialBase.toCharArray(pixelSerial[pixelPositionsSizeBack], pixelSerialBase.length() + 1);
+    *pixelPositionsSize = temp2;
   }
 }
 
@@ -71,7 +82,7 @@ void draw(int *x, int *y, int *pixelPositionsSize, int *xString, int *yString, c
   
   int counter = 0;
   String drawString;
-  
+
   while (counter != *pixelPositionsSize) {
     screenController.drawPixel(32 + x[counter], 32 + y[counter]);
     counter++;
@@ -84,15 +95,19 @@ void draw(int *x, int *y, int *pixelPositionsSize, int *xString, int *yString, c
   }
 }
 
-void getPixelPositions(char *arraySerial, int *x, int *y, int pixelPositionsSizeBack) {
+void getPixelPositions(char **pixelSerial, int *x, int *y, int pixelPositionsSizeBack) {
   String positionString;
+  int counter = 0;
 
-  positionString = String(String(arraySerial[0]) + String(arraySerial[1]));
-  x[pixelPositionsSizeBack] = positionString.toInt();
-  positionString = String(String(arraySerial[2]) + String(arraySerial[3]));
-  y[pixelPositionsSizeBack] = positionString.toInt();
+  while(counter != pixelPositionsSizeBack){
+    positionString = String(String(pixelSerial[counter][0]) + String(pixelSerial[counter][1]));
+    x[counter] = positionString.toInt();
+    positionString = String(String(pixelSerial[counter][2]) + String(pixelSerial[counter][3]));
+    y[counter] = positionString.toInt();
 
-  free(arraySerial);
+    
+    counter++;
+  }
 }
 
 void getStringPositions(char **stringSerial, int *xString, int *yString, int stringPositionsSizeBack){    
@@ -100,7 +115,7 @@ void getStringPositions(char **stringSerial, int *xString, int *yString, int str
   int counter = 0;
 
   while(counter != stringPositionsSizeBack){
-    intString = String(String(stringSerial[counter][0]) + String(stringSerial[counter][1]));
+      intString = String(String(stringSerial[counter][0]) + String(stringSerial[counter][1]));
       xString[counter] = intString.toInt();
       intString = String(String(stringSerial[counter][2]) + String(stringSerial[counter][3]));
       yString[counter] = intString.toInt();
@@ -116,19 +131,11 @@ void getStringPositions(char **stringSerial, int *xString, int *yString, int str
 
 /* Start */
 
-void setup(){
-  Serial.begin(57600);
-  Serial1.begin(57600);
-  
-  asuraMain.begin();
-  
-  screenController.begin();
-  screenController.clear();
-
+void freeAll(){
   free(x);
   free(y);
-  free(arraySerial);
-  arraySerial = (char*) calloc(0, sizeof(char));
+  free(pixelSerial);
+  pixelSerial = (char**) calloc(0, sizeof(char));
   x = (int*) calloc(0, sizeof(int));
   y = (int*) calloc(0, sizeof(int));
   *pixelPositionsSize = 0;
@@ -139,7 +146,19 @@ void setup(){
   *stringPositionsSize = 0;
   stringSerial = (char**) calloc(0, sizeof(char));
   xString = (int*) calloc(0, sizeof(int));
-  yString = (int*) calloc(0, sizeof(int));
+  yString = (int*) calloc(0, sizeof(int));  
+}
+
+void setup(){
+  Serial.begin(57600);
+  Serial1.begin(57600);
+  
+  asuraMain.begin();
+  
+  screenController.begin();
+  screenController.clear();
+
+  freeAll();
 }
 
 void loop(){
@@ -148,59 +167,59 @@ void loop(){
 
   if(Serial1.available()){
     char caractereSerial;
-    while (Serial1.available() > 0) {
+    while (Serial1.available()) {
       caractereSerial = Serial1.read(); 
-      stringBase.concat(caractereSerial);
-      if((int) caractereSerial == 96){
-        bluetoothStart = true;
+      stringBase.concat(caractereSerial); 
+      if(caractereSerial == '\n'){
+        if(stringBase[0] != ' ' && stringBase.length() >= 5){
+          bluetoothStart = true;
+        }else{
+          Serial.println("Barrado");
+          stringBase = "";
+        }
       }
     }
   } 
 
-  if (bluetoothStart == true) {
+  if (bluetoothStart) {
     int stringPositionsSizeBack = *stringPositionsSize;
     int pixelPositionsSizeBack = *pixelPositionsSize;
     
     stringSerial = (char**) realloc(stringSerial, (stringPositionsSizeBack + 1) * sizeof(char*));
-    arraySerial = (char*) calloc(4, sizeof(char));
+    pixelSerial = (char**) realloc(pixelSerial,(pixelPositionsSizeBack + 1) * sizeof(char*));
+
+      if(stringSerial == NULL && pixelSerial == NULL){
+        Serial1.println("9");
+        freeAll();
+      }
+
+    Serial.print(stringBase);
     
-    getBluetoothResults(arraySerial, pixelPositionsSize, xString, yString, stringPositionsSize, stringPositionsSizeBack, stringSerial, stringBase);
+    getBluetoothResults(pixelSerial, pixelPositionsSize, pixelPositionsSizeBack, xString, yString, stringPositionsSize, stringPositionsSizeBack, stringSerial, stringBase);
     stringBase = "";
     bluetoothStart = false;
-    x = (int*) realloc(x, (pixelPositionsSizeBack + 1) * sizeof(int));
-    y = (int*) realloc(y, (pixelPositionsSizeBack + 1) * sizeof(int));    
 
-    if (strcmp (stringSerial[stringPositionsSizeBack], "ended") != 0) { 
-      if (x == NULL || y == NULL) {
-        Serial.println("Memory Error");            
-      }else{    
-        getPixelPositions(arraySerial, x, y, pixelPositionsSizeBack);
-      }
-    } else {
+    if (strcmp (stringSerial[stringPositionsSizeBack], "ended") == 0) { 
+      Serial.println("");
+      
       xString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
       yString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
+      x = (int*) calloc(pixelPositionsSizeBack, sizeof(int));
+      y = (int*) calloc(pixelPositionsSizeBack, sizeof(int));    
+
+      if(xString == NULL && yString == NULL && x == NULL && y == NULL){
+        Serial1.println("9");
+        freeAll();
+      }
+
       getStringPositions(stringSerial, xString, yString, stringPositionsSizeBack);
+      getPixelPositions(pixelSerial, x, y, pixelPositionsSizeBack);
       screenController.firstPage();
       do {
         draw(x, y, pixelPositionsSize, xString, yString, stringSerial, stringPositionsSizeBack);
       } while (screenController.nextPage());
 
-      free(x);
-      free(y);
-      free(arraySerial);
-      arraySerial = (char*) calloc(0, sizeof(char));
-      x = (int*) calloc(0, sizeof(int));
-      y = (int*) calloc(0, sizeof(int));
-      *pixelPositionsSize = 0;
-                  
-      free(xString);
-      free(yString);
-      free(stringSerial);
-      *stringPositionsSize = 0;
-      stringSerial = (char**) calloc(0, sizeof(char));
-      xString = (int*) calloc(0, sizeof(int));
-      yString = (int*) calloc(0, sizeof(int));
-
+      freeAll();
     }   
   }
 
