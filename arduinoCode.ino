@@ -1,3 +1,17 @@
+/* Copyright 2017 Yuri Faria
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License. */
+
 #include <Asura.h>
 
 /* Principal */
@@ -235,6 +249,7 @@ void loop(){
 
   if(previousAccelStartMillis < 18 && previousAccelStartMillis != 0){
     if(asuraMain.accel('z') == 180){
+      Serial.println("Up");
       Serial1.println(0); // Up
       previousAccelStartMillis = 0;
      }
@@ -262,6 +277,7 @@ void loop(){
         
   if(previousAccelRightMillis < 200 && previousAccelRightMillis != 0 ){ 
     if(asuraMain.accel('y') <= 271){
+      Serial.println("Left");
       Serial1.println(2); // Left
       previousAccelRightMillis = 0;
     }
@@ -273,6 +289,7 @@ void loop(){
 
   if(previousAccelLeftMillis < 200 && previousAccelLeftMillis != 0 ){ 
     if(asuraMain.accel('y') >= 271){
+      Serial.println("Right");
       Serial1.println(3); // Right
       previousAccelLeftMillis = 0;
     }else{
@@ -284,6 +301,7 @@ void loop(){
     
   if(previousAccelUpMillis < 200 && previousAccelUpMillis != 0 ){ 
     if(asuraMain.accel('z') == 180){
+      Serial.println("Down");
       Serial1.println(1); // Down
       previousAccelUpMillis = 0;
     }else{
@@ -291,5 +309,26 @@ void loop(){
         previousAccelUpMillis = 0;
       }  
     }
-  }      
+  }
+
+   if(previousAccelUpMillis > 500 && previousAccelUpMillis < 1000 && previousAccelUpMillis != 0 ){ 
+    if(asuraMain.accel('z') == 180){
+      Serial.println("Destroy");
+      Serial1.println(4); // Destroy
+      previousAccelUpMillis = 0;
+    }else{
+      if(asuraMain.accel('z') == 180){
+        previousAccelUpMillis = 0;
+      }
+    }
+  }
+
+  if(Serial.available()){
+      char readA = Serial.read();
+      if(readA == '0'){ Serial1.println(0); Serial.println("Up");}
+      if(readA == '1'){ Serial1.println(1); Serial.println("Down");}
+      if(readA == '2'){ Serial1.println(2); Serial.println("Right");}
+      if(readA == '3'){ Serial1.println(3); Serial.println("Left");}
+      if(readA == '4'){ Serial1.println(4); Serial.println("Destroy");}
+  }
 }
