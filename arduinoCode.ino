@@ -327,8 +327,8 @@ void loop(){
       char readA = Serial.read();
       if(readA == '0'){ Serial1.println(0); Serial.println("Up");}
       if(readA == '1'){ Serial1.println(1); Serial.println("Down");}
-      if(readA == '2'){ Serial1.println(2); Serial.println("Right");}
-      if(readA == '3'){ Serial1.println(3); Serial.println("Left");}
+      if(readA == '2'){ Serial1.println(2); Serial.println("Left");}
+      if(readA == '3'){ Serial1.println(3); Serial.println("Right");}
       if(readA == '4'){ Serial1.println(4); Serial.println("Destroy");}
   }
 }
