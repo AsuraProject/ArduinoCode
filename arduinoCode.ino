@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License. */
 
 #include <Asura.h>
+#include <MemoryFree.h>
 
 /* Principal */
 Asura asuraMain;
@@ -107,6 +108,8 @@ void draw(int *x, int *y, int *pixelPositionsSize, int *xString, int *yString, c
     screenController.drawStr(32 + xString[counter], 32 + yString[counter], stringSerial[counter]);
     counter++;
   }
+    Serial.print("Free Memory - After Draw: ");
+    Serial.println(freeMemory());  
 }
 
 void getPixelPositions(char **pixelSerial, int *x, int *y, int pixelPositionsSizeBack) {
@@ -146,37 +149,48 @@ void getStringPositions(char **stringSerial, int *xString, int *yString, int str
 /* Start */
 
 void freeAll(){
+  Serial.print("Free Memory - Before FreeAll(): ");
+  Serial.println(freeMemory());
   free(x);
   free(y);
   free(pixelSerial);
-  pixelSerial = (char**) calloc(0, sizeof(char));
-  x = (int*) calloc(0, sizeof(int));
-  y = (int*) calloc(0, sizeof(int));
+  pixelSerial = NULL;
+  x = NULL;
+  y = NULL;
   *pixelPositionsSize = 0;
               
   free(xString);
   free(yString);
   free(stringSerial);
   *stringPositionsSize = 0;
-  stringSerial = (char**) calloc(0, sizeof(char));
-  xString = (int*) calloc(0, sizeof(int));
-  yString = (int*) calloc(0, sizeof(int));  
+  stringSerial = NULL;
+  xString = NULL;
+  yString = NULL; 
+
+  Serial.print("Free Memory - After FreeAll(): ");
+  Serial.println(freeMemory());
+  Serial.println("--------------------------------------");   
 }
 
 void setup(){
   Serial.begin(57600);
   Serial1.begin(57600);
+
+  while(!Serial){
+    
+  }
   
   asuraMain.begin();
   
   screenController.begin();
   screenController.clear();
 
+  Serial.print("Free Memory - Setup: ");
+  Serial.println(freeMemory());
   freeAll();
 }
 
 void loop(){
-
   /* Screen */
 
   if(Serial1.available()){
@@ -188,7 +202,7 @@ void loop(){
         if(stringBase[0] != ' ' && stringBase.length() >= 5){
           bluetoothStart = true;
         }else{
-          Serial.println("Barrado");
+          //Serial.println("Barrado");
           stringBase = "";
         }
       }
@@ -196,6 +210,8 @@ void loop(){
   } 
 
   if (bluetoothStart) {
+    Serial.print("Free Memory - Before BluetoothStart: ");
+    Serial.println(freeMemory());    
     int stringPositionsSizeBack = *stringPositionsSize;
     int pixelPositionsSizeBack = *pixelPositionsSize;
     
@@ -207,24 +223,27 @@ void loop(){
         freeAll();
       }
 
-    Serial.print(stringBase);
+    //Serial.print(stringBase);
     
     getBluetoothResults(pixelSerial, pixelPositionsSize, pixelPositionsSizeBack, xString, yString, stringPositionsSize, stringPositionsSizeBack, stringSerial, stringBase);
     stringBase = "";
     bluetoothStart = false;
 
     if (strcmp (stringSerial[stringPositionsSizeBack], "ended") == 0) { 
-      Serial.println("");
+      //Serial.println("");
       
       xString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
       yString = (int*) calloc(stringPositionsSizeBack, sizeof(int));
       x = (int*) calloc(pixelPositionsSizeBack, sizeof(int));
       y = (int*) calloc(pixelPositionsSizeBack, sizeof(int));    
 
-      if(xString == NULL && yString == NULL && x == NULL && y == NULL){
+      if(xString == NULL || yString == NULL || x == NULL || y == NULL){
         Serial1.println("9");
         freeAll();
       }
+
+      Serial.print("Free Memory - Before Draw: ");
+      Serial.println(freeMemory());
 
       getStringPositions(stringSerial, xString, yString, stringPositionsSizeBack);
       getPixelPositions(pixelSerial, x, y, pixelPositionsSizeBack);
@@ -249,8 +268,8 @@ void loop(){
 
   if(previousAccelStartMillis < 18 && previousAccelStartMillis != 0){
     if(asuraMain.accel('z') == 180){
-      Serial.println("Up");
-      Serial1.println(0); // Up
+      //Serial.println("Up");
+      //Serial1.println(0); // Up
       previousAccelStartMillis = 0;
      }
   }else{
@@ -277,8 +296,8 @@ void loop(){
         
   if(previousAccelRightMillis < 200 && previousAccelRightMillis != 0 ){ 
     if(asuraMain.accel('y') <= 271){
-      Serial.println("Left");
-      Serial1.println(2); // Left
+      //Serial.println("Left");
+      //Serial1.println(2); // Left
       previousAccelRightMillis = 0;
     }
   }else{
@@ -289,8 +308,8 @@ void loop(){
 
   if(previousAccelLeftMillis < 200 && previousAccelLeftMillis != 0 ){ 
     if(asuraMain.accel('y') >= 271){
-      Serial.println("Right");
-      Serial1.println(3); // Right
+      //Serial.println("Right");
+      //Serial1.println(3); // Right
       previousAccelLeftMillis = 0;
     }else{
       if(asuraMain.accel('y') >= 271){
@@ -301,8 +320,8 @@ void loop(){
     
   if(previousAccelUpMillis < 200 && previousAccelUpMillis != 0 ){ 
     if(asuraMain.accel('z') == 180){
-      Serial.println("Down");
-      Serial1.println(1); // Down
+      //Serial.println("Down");
+      //Serial1.println(1); // Down
       previousAccelUpMillis = 0;
     }else{
       if(asuraMain.accel('z') == 180){
@@ -313,8 +332,8 @@ void loop(){
 
    if(previousAccelUpMillis > 500 && previousAccelUpMillis < 1000 && previousAccelUpMillis != 0 ){ 
     if(asuraMain.accel('z') == 180){
-      Serial.println("Destroy");
-      Serial1.println(4); // Destroy
+      //Serial.println("Destroy");
+      //Serial1.println(4); // Destroy
       previousAccelUpMillis = 0;
     }else{
       if(asuraMain.accel('z') == 180){
@@ -325,10 +344,10 @@ void loop(){
 
   if(Serial.available()){
       char readA = Serial.read();
-      if(readA == '0'){ Serial1.println(0); Serial.println("Up");}
-      if(readA == '1'){ Serial1.println(1); Serial.println("Down");}
-      if(readA == '2'){ Serial1.println(2); Serial.println("Left");}
-      if(readA == '3'){ Serial1.println(3); Serial.println("Right");}
-      if(readA == '4'){ Serial1.println(4); Serial.println("Destroy");}
+      if(readA == '0'){ Serial1.println(0); /*Serial.println("Up");*/}
+      if(readA == '1'){ Serial1.println(1); /*Serial.println("Down"); */}
+      if(readA == '2'){ Serial1.println(2); /*Serial.println("Left"); */}
+      if(readA == '3'){ Serial1.println(3); /*Serial.println("Right"); */}
+      if(readA == '4'){ Serial1.println(4); /*Serial.println("Destroy"); */}
   }
 }
