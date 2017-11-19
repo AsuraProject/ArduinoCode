@@ -10,7 +10,6 @@ bool isFirst = true;
 void setup() {
   Serial.begin(57600);
   Serial1.begin(57600);
-  while(!Serial){}
 
   screenController.begin();
 }
@@ -21,12 +20,7 @@ void loop() {
     while (Serial1.available()) {
       caractereSerial = Serial1.read(); 
       if(caractereSerial == '\n'){
-        if(stringBase[0] != ' ' && stringBase.length() >= 5){
           bluetoothStart = true;
-        }else{
-          //Serial.println("Barrado");
-          stringBase = "";
-        }
       }else{
         stringBase.concat(caractereSerial); 
       }
@@ -50,8 +44,36 @@ void loop() {
       return;
     }
 
+    if(stringBase.charAt(1) == 'f'){
+      Serial.println(stringBase.substring(2));
+      Serial.println(stringBase.substring(2).toInt());
+      if(stringBase.substring(2) == "Freedom"){
+        screenController.setFont(u8g2_font_freedoomr10_tu);
+      }else{
+        switch(stringBase.substring(2).toInt()){
+          case 4:
+            screenController.setFont(u8g2_font_u8glib_4_tf);
+            break;
+          case 6:
+            screenController.setFont(u8g2_font_5x7_tf);
+            break;
+          case 8:
+            screenController.setFont(u8g2_font_6x10_tf);
+            Serial.println("FONT 8");
+            break;
+          case 12:
+            screenController.setFont(u8g2_font_7x14_tf);
+            break;
+          default:
+            screenController.setFont(u8g2_font_u8glib_4_tf);
+        }
+      }
+      stringBase = "";
+      bluetoothStart = false;
+      return;
+    }
+    
     if(stringBase.charAt(0) == '#'){
-      screenController.setFont(u8g2_font_u8glib_4_tf);
       char stringArray[stringBase.length() - 4];
       String text = stringBase.substring(5);
       text.toCharArray(stringArray, stringBase.length() - 4);
