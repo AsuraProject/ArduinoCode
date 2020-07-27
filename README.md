@@ -7,6 +7,9 @@ The purpose of this code was to be the hardware part of Asura Glass (an old proj
 `ArduinoCode.ino` is the old code, which was very complex. `NewArduinoCode.ino` is the" most current "code (although it is still old), more simplified, but not so complete.
 
 <a href="https://github.com/AsuraProject/asuraproject.github.com">Asura</a> - About Asura Glass
+
 <a href="https://github.com/AsuraProject/AsuraApp">AsuraApp</a> - Java App Asura Glass
+
 <a href="https://github.com/AsuraProject/WebService">WebService</a> - Web Service PHP/JS Asura Glass
+
 <a href="https://github.com/AsuraProject/AsuraIDE">AsuraIDE</a> - Asura Glass "IDE"
