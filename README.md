@@ -1,5 +1,7 @@
 # ASURA ARDUINO CODE
 
+<a href="https://github.com/AsuraProject/AsuraArduinoCode/blob/master/README-ptbr.md">Portuguese README</a>
+
 This project is already archived (2017) and has not been finalized, however, it is maintained on Github (and I am creating a README) due to nostalgia =)
 
 The purpose of this code was to be the hardware part of Asura Glass (an old project of mine, which was not forward, which was intended to be a smartglass that could allow the download of applications programmed in .JS).
